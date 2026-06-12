@@ -17,6 +17,8 @@ from .models import (
     Bracket,
     BracketMatch,
     BracketTeam,
+    GroupResult,
+    GroupTeamResult,
     LeaderboardEntry,
     SimulationResult,
     Stage,
@@ -102,6 +104,8 @@ def run_simulation(
     champ_counts = [0] * n
     # stage_counts[i] = [reached R32, R16, QF, SEMI, FINAL, WINNER]
     stage_counts = [[0] * len(_KO_STAGES) for _ in range(n)]
+    # position_counts[i] = [#1st, #2nd, #3rd, #4th] in the group stage
+    position_counts = [[0, 0, 0, 0] for _ in range(n)]
 
     runs_completed = 0
     for run_idx in range(num_runs):
@@ -117,6 +121,9 @@ def run_simulation(
             counters = stage_counts[index_of[team_id]]
             for k in range(top + 1):
                 counters[k] += 1
+
+        for team_id, position in outcome.group_positions.items():
+            position_counts[index_of[team_id]][position] += 1
 
         runs_completed += 1
         if progress_callback is not None and runs_completed % progress_every == 0:
@@ -161,6 +168,12 @@ def run_simulation(
         )
 
     team_results.sort(key=lambda t: t.championship_count, reverse=True)
+    advance_prob_by_id = {
+        rt.id: stage_counts[i][0] / denom for i, rt in enumerate(flat_teams)
+    }
+    group_results = _build_group_results(
+        flat_teams, index_of, position_counts, advance_prob_by_id, denom
+    )
     bracket = _build_display_bracket(groups, weight, champ_prob_by_id)
 
     return SimulationResult(
@@ -170,8 +183,46 @@ def run_simulation(
         runs_completed=runs_completed,
         duration_seconds=round(duration, 3),
         teams=team_results,
+        groups=group_results,
         bracket=bracket,
     )
+
+
+def _build_group_results(
+    flat_teams: list[RTeam],
+    index_of: dict[str, int],
+    position_counts: list[list[int]],
+    advance_prob_by_id: dict[str, float],
+    denom: int,
+) -> list["GroupResult"]:
+    """Aggregate per-team group finishing positions into predicted standings."""
+    by_group: dict[str, list[RTeam]] = {}
+    for rt in flat_teams:
+        by_group.setdefault(rt.group, []).append(rt)
+
+    results: list[GroupResult] = []
+    for letter in sorted(by_group.keys()):
+        entries: list[GroupTeamResult] = []
+        for rt in by_group[letter]:
+            counts = position_counts[index_of[rt.id]]
+            finish_probs = [c / denom for c in counts]
+            # Expected finishing position (1-indexed).
+            avg_position = sum((p + 1) * finish_probs[p] for p in range(4))
+            entries.append(
+                GroupTeamResult(
+                    team_id=rt.id,
+                    name=rt.name,
+                    flag=rt.flag,
+                    elo_rating=rt.elo,
+                    avg_position=round(avg_position, 3),
+                    finish_probs=[round(x, 4) for x in finish_probs],
+                    advance_probability=round(advance_prob_by_id[rt.id], 4),
+                )
+            )
+        # Predicted finishing order: lowest expected position first.
+        entries.sort(key=lambda e: e.avg_position)
+        results.append(GroupResult(group=letter, teams=entries))
+    return results
 
 
 def _build_display_bracket(

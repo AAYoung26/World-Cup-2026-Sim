@@ -166,13 +166,15 @@ class TournamentOutcome:
     champion: RTeam
     # team id -> furthest Stage reached this run.
     furthest_stage: dict[str, Stage]
+    # team id -> group finishing position this run (0 = 1st ... 3 = 4th).
+    group_positions: dict[str, int]
     # Present only when ``record_bracket`` is requested.
     bracket_rounds: dict[str, list[dict]] | None = None
 
 
 def _qualifiers(
     groups: dict[str, list[RTeam]], weight: float, rng: Random, deterministic: bool
-) -> tuple[list[RTeam], dict[str, Stage]]:
+) -> tuple[list[RTeam], dict[str, Stage], dict[str, int]]:
     """Run all groups and return 32 seeded qualifiers + group-stage stages.
 
     Seeding order: the 12 group winners (ranked among themselves), then the 12
@@ -180,6 +182,7 @@ def _qualifiers(
     ordered by the same FIFA criteria, giving seeds 1..32.
     """
     furthest: dict[str, Stage] = {}
+    group_positions: dict[str, int] = {}
     winners: list[Standing] = []
     runners: list[Standing] = []
     thirds: list[Standing] = []
@@ -194,8 +197,9 @@ def _qualifiers(
         winners.append(standings[0])
         runners.append(standings[1])
         thirds.append(standings[2])
-        for s in standings:
+        for position, s in enumerate(standings):
             furthest[s.team.id] = Stage.GROUP
+            group_positions[s.team.id] = position
 
     # Best 8 of the 12 third-placed teams advance.
     thirds.sort(key=_rank_key, reverse=True)
@@ -210,7 +214,7 @@ def _qualifiers(
     # Everyone in the knockout reached at least the Round of 32.
     for team in seeded:
         furthest[team.id] = Stage.ROUND_OF_32
-    return seeded, furthest
+    return seeded, furthest, group_positions
 
 
 def simulate_tournament(
@@ -230,7 +234,7 @@ def simulate_tournament(
             used to build the stable display bracket.
         record_bracket: if True, capture the full round-by-round bracket.
     """
-    seeded, furthest = _qualifiers(groups, weight, rng, deterministic)
+    seeded, furthest, group_positions = _qualifiers(groups, weight, rng, deterministic)
 
     seed_order = _seed_bracket_order(len(seeded))  # 32 positions
     # Build initial slots in bracket order: position p holds seed seed_order[p].
@@ -284,6 +288,7 @@ def simulate_tournament(
     return TournamentOutcome(
         champion=champion,
         furthest_stage=furthest,
+        group_positions=group_positions,
         bracket_rounds=bracket_rounds,
     )
 

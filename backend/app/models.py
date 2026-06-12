@@ -150,6 +150,28 @@ class Bracket(BaseModel):
     champion_id: Optional[str] = None
 
 
+class GroupTeamResult(BaseModel):
+    """A team's aggregated group-stage outcome across all runs."""
+
+    team_id: str
+    name: str
+    flag: str = ""
+    elo_rating: int
+    # Expected finishing position (1.0 = always first, 4.0 = always last).
+    avg_position: float
+    # [P(finish 1st), P(2nd), P(3rd), P(4th)] across all runs.
+    finish_probs: list[float] = Field(default_factory=lambda: [0.0, 0.0, 0.0, 0.0])
+    # Probability of reaching the knockout stage (top 2 or best-third).
+    advance_probability: float = 0.0
+
+
+class GroupResult(BaseModel):
+    """Predicted standings for one group, ordered best-to-worst."""
+
+    group: str
+    teams: list[GroupTeamResult] = Field(default_factory=list)
+
+
 class SimulationResult(BaseModel):
     """Final payload returned over WebSocket and from GET /api/results."""
 
@@ -160,4 +182,5 @@ class SimulationResult(BaseModel):
     runs_completed: int
     duration_seconds: float
     teams: list[TeamResult] = Field(default_factory=list)
+    groups: list[GroupResult] = Field(default_factory=list)
     bracket: Bracket = Field(default_factory=Bracket)

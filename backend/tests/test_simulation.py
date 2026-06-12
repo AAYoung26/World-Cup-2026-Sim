@@ -76,6 +76,36 @@ def test_bracket_is_populated():
     assert final.home.championship_probability >= 0.0
 
 
+def test_group_results_are_well_formed():
+    teams = default_teams()
+    runs = 400
+    result = run_simulation(teams, weight=1.0, num_runs=runs, seed=9)
+    assert len(result.groups) == 12
+    for group in result.groups:
+        assert len(group.teams) == 4
+        # Ordered best-to-worst by expected finishing position.
+        positions = [t.avg_position for t in group.teams]
+        assert positions == sorted(positions)
+        for t in group.teams:
+            assert 1.0 <= t.avg_position <= 4.0
+            assert abs(sum(t.finish_probs) - 1.0) < 1e-6
+            assert 0.0 <= t.advance_probability <= 1.0
+        # In each group exactly one team takes each position every run, so each
+        # position column sums to 1.0 across the four teams.
+        for col in range(4):
+            assert abs(sum(t.finish_probs[col] for t in group.teams) - 1.0) < 1e-6
+
+
+def test_group_winner_is_usually_the_strongest_at_full_weight():
+    teams = default_teams()
+    result = run_simulation(teams, weight=1.0, num_runs=500, seed=10)
+    # Group D contains Argentina (clearly the strongest); it should be the
+    # predicted winner (lowest expected position) at full Elo weight.
+    group_d = next(g for g in result.groups if g.group == "D")
+    assert group_d.teams[0].team_id == "ARG"
+    assert group_d.teams[0].advance_probability > 0.9
+
+
 def test_1000_runs_under_10_seconds():
     teams = default_teams()
     start = time.perf_counter()

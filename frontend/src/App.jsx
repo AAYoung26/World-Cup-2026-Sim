@@ -6,8 +6,17 @@ import ProgressBar from './components/ProgressBar'
 import Leaderboard from './components/Leaderboard'
 import ProbabilityChart from './components/ProbabilityChart'
 import Bracket from './components/Bracket'
+import GroupStandings from './components/GroupStandings'
+import TeamExplorer from './components/TeamExplorer'
 import Legend from './components/Legend'
 import { formatPct } from './utils/colors'
+
+const RESULT_TABS = [
+  { id: 'bracket', label: 'Knockout Bracket' },
+  { id: 'groups', label: 'Group Stage' },
+  { id: 'team', label: 'Team Explorer' },
+  { id: 'odds', label: 'Championship Odds' },
+]
 
 export default function App() {
   const [eloWeight, setEloWeight] = useState(100)
@@ -15,6 +24,7 @@ export default function App() {
   const [teams, setTeams] = useState([])
   const [eloSource, setEloSource] = useState(null)
   const [backendError, setBackendError] = useState(null)
+  const [activeTab, setActiveTab] = useState('bracket')
 
   const { status, progress, result, error, reconnecting, run, abort } = useSimulation()
 
@@ -122,8 +132,22 @@ export default function App() {
             {isComplete && (
               <>
                 <ResultsSummary result={result} champion={champion} />
-                <Bracket bracket={result.bracket} topIds={topIds} />
-                <ProbabilityChart teams={result.teams} topN={10} />
+                <ResultTabs active={activeTab} onChange={setActiveTab} />
+                {activeTab === 'bracket' && (
+                  <Bracket bracket={result.bracket} topIds={topIds} />
+                )}
+                {activeTab === 'groups' && <GroupStandings groups={result.groups} />}
+                {activeTab === 'team' && (
+                  <TeamExplorer
+                    teams={result.teams}
+                    groups={result.groups}
+                    bracket={result.bracket}
+                    eloWeight={result.elo_weight}
+                  />
+                )}
+                {activeTab === 'odds' && (
+                  <ProbabilityChart teams={result.teams} topN={10} />
+                )}
               </>
             )}
           </section>
@@ -167,6 +191,27 @@ function Stat({ label, value }) {
     <div className="rounded-xl border border-slate-700/60 bg-slate-900/60 px-3 py-1.5">
       <div className="text-base font-bold leading-none text-slate-100">{value}</div>
       <div className="mt-0.5 text-[10px] uppercase tracking-wide text-slate-500">{label}</div>
+    </div>
+  )
+}
+
+function ResultTabs({ active, onChange }) {
+  return (
+    <div className="flex flex-wrap gap-1.5 rounded-xl border border-slate-700/60 bg-slate-900/60 p-1.5">
+      {RESULT_TABS.map((tab) => (
+        <button
+          key={tab.id}
+          type="button"
+          onClick={() => onChange(tab.id)}
+          className={`flex-1 whitespace-nowrap rounded-lg px-3 py-2 text-xs font-bold transition ${
+            active === tab.id
+              ? 'bg-emerald-500/20 text-emerald-200 shadow-sm'
+              : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-200'
+          }`}
+        >
+          {tab.label}
+        </button>
+      ))}
     </div>
   )
 }

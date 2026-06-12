@@ -23,6 +23,10 @@ championship probability colour-coded by confidence level.
 - **ESPN-style bracket** — every knockout round, colour-coded by championship
   probability across five confidence levels, with percentage labels for the
   favourites.
+- **Predicted group standings** — for all 12 groups, each team's expected
+  finishing order with per-position and advancement probabilities.
+- **Team Explorer** — pick any team to see who it would beat / lose to
+  (head-to-head win probabilities) and its projected path through the bracket.
 - **Resilient** — bundled fallback Elo ratings if the external API is
   unavailable; WebSocket auto-reconnects; aborted runs still finish server-side
   and remain retrievable.
