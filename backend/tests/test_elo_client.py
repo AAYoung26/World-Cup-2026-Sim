@@ -49,7 +49,7 @@ async def test_api_ratings_are_applied(monkeypatch):
     assert by_id["ARG"].elo_rating == 2500
     assert by_id["BRA"].elo_rating == 2400
     # Untouched teams keep their bundled rating.
-    assert by_id["MEX"].elo_rating == 1812
+    assert by_id["MEX"].elo_rating == 1790
 
 
 async def test_api_failure_falls_back(monkeypatch):

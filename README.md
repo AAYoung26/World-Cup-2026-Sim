@@ -186,9 +186,10 @@ Elo-dominated, and the full WebSocket flow.
   its own "groups A–L" and "top 2 + 8 best thirds = 32" rules. Only 12 groups of
   4 yield exactly 32 knockout qualifiers (2 × 12 + 8), which is also the real
   FIFA 2026 format, so that's what's implemented.
-- **Group draw is representative.** Hosts (USA, Canada, Mexico) are seeded into
-  separate groups; the rest is a plausible balanced draw. Swap assignments in
-  `backend/app/teams_data.py` to match the official draw.
+- **Group draw matches the official 2026 draw.** All 48 qualified teams and
+  the groups (A–L) follow FIFA's Final Draw held on 5 December 2025, with hosts
+  USA, Canada and Mexico in separate groups, as encoded in
+  `backend/app/teams_data.py`.
 - **Knockout seeding.** The 32 qualifiers are seeded (winners → runners-up →
   best thirds, each ranked by FIFA criteria) into a standard balanced bracket
   (1 v 32, …) rather than FIFA's intricate third-place slotting table.

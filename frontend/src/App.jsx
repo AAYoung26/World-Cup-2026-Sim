@@ -290,7 +290,7 @@ function Footer() {
   return (
     <p className="mt-10 text-center text-xs text-slate-600">
       Probabilities are Monte Carlo estimates from a logistic Elo model · group
-      assignments are representative of the 2026 format.
+      assignments follow the official 2026 World Cup draw.
     </p>
   )
 }

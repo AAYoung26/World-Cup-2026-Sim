@@ -56,9 +56,9 @@ def test_zero_weight_is_near_uniform():
 def test_full_weight_is_elo_dominated():
     teams = default_teams()
     result = run_simulation(teams, weight=1.0, num_runs=2000, seed=6)
-    # Strongest team (Argentina) should be the clear favourite.
+    # Strongest team (Spain) should be the clear favourite.
     top = result.teams[0]
-    assert top.team_id == "ARG"
+    assert top.team_id == "ESP"
     assert top.championship_probability > 0.15
     # Probabilities are far more concentrated than the uniform case.
     assert top.championship_probability > 0.10
@@ -99,11 +99,11 @@ def test_group_results_are_well_formed():
 def test_group_winner_is_usually_the_strongest_at_full_weight():
     teams = default_teams()
     result = run_simulation(teams, weight=1.0, num_runs=500, seed=10)
-    # Group D contains Argentina (clearly the strongest); it should be the
+    # Group J contains Argentina (clearly the strongest); it should be the
     # predicted winner (lowest expected position) at full Elo weight.
-    group_d = next(g for g in result.groups if g.group == "D")
-    assert group_d.teams[0].team_id == "ARG"
-    assert group_d.teams[0].advance_probability > 0.9
+    group_j = next(g for g in result.groups if g.group == "J")
+    assert group_j.teams[0].team_id == "ARG"
+    assert group_j.teams[0].advance_probability > 0.9
 
 
 def test_1000_runs_under_10_seconds():

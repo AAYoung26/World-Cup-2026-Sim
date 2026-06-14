@@ -72,7 +72,7 @@ def test_deterministic_mode_strongest_team_wins():
         (t for g in groups.values() for t in g), key=lambda t: t.elo
     )
     outcome = simulate_tournament(groups, 1.0, Random(0), deterministic=True)
-    assert outcome.champion.id == strongest.id  # Argentina in the bundled data.
+    assert outcome.champion.id == strongest.id
 
 
 def test_recorded_bracket_has_expected_round_sizes():

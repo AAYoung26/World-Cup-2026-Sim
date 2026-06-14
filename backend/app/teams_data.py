@@ -10,10 +10,10 @@ with its own "groups A-L" and "top 2 + 8 best thirds = 32" rules. Only 12 groups
 of 4 produce exactly 32 knockout qualifiers, which is also the real FIFA 2026
 format, so that is what we implement here.
 
-The group draw below is representative of a plausible 2026 draw (hosts USA,
-Canada, Mexico seeded into separate groups). The Elo ratings double as the
-in-memory fallback dataset used when the external Elo API is unreachable, so the
-simulator always has 48 rated teams to work with.
+The group draw below matches the official Final Draw held on 5 December 2025
+in Washington, D.C. The Elo ratings double as the in-memory fallback dataset
+used when the external Elo API is unreachable, so the simulator always has 48
+rated teams to work with.
 """
 from __future__ import annotations
 
@@ -22,65 +22,67 @@ from .models import Team
 # Each tuple: (id, name, elo_rating, group, flag_emoji)
 _TEAM_TABLE: list[tuple[str, str, int, str, str]] = [
     # Group A
-    ("MEX", "Mexico", 1812, "A", "\U0001F1F2\U0001F1FD"),
-    ("CRO", "Croatia", 1915, "A", "\U0001F1ED\U0001F1F7"),
-    ("WAL", "Wales", 1788, "A", "\U0001F3F4"),
-    ("NOR", "Norway", 1820, "A", "\U0001F1F3\U0001F1F4"),
+    ("MEX", "Mexico", 1790, "A", "\U0001F1F2\U0001F1FD"),
+    ("KOR", "South Korea", 1790, "A", "\U0001F1F0\U0001F1F7"),
+    ("CZE", "Czechia", 1720, "A", "\U0001F1E8\U0001F1FF"),
+    ("RSA", "South Africa", 1580, "A", "\U0001F1FF\U0001F1E6"),
     # Group B
-    ("CAN", "Canada", 1709, "B", "\U0001F1E8\U0001F1E6"),
-    ("MAR", "Morocco", 1903, "B", "\U0001F1F2\U0001F1E6"),
-    ("SWE", "Sweden", 1801, "B", "\U0001F1F8\U0001F1EA"),
-    ("QAT", "Qatar", 1652, "B", "\U0001F1F6\U0001F1E6"),
+    ("CAN", "Canada", 1790, "B", "\U0001F1E8\U0001F1E6"),
+    ("SUI", "Switzerland", 1900, "B", "\U0001F1E8\U0001F1ED"),
+    ("BIH", "Bosnia and Herzegovina", 1700, "B", "\U0001F1E7\U0001F1E6"),
+    ("QAT", "Qatar", 1640, "B", "\U0001F1F6\U0001F1E6"),
     # Group C
-    ("USA", "United States", 1831, "C", "\U0001F1FA\U0001F1F8"),
-    ("JPN", "Japan", 1879, "C", "\U0001F1EF\U0001F1F5"),
-    ("SRB", "Serbia", 1808, "C", "\U0001F1F7\U0001F1F8"),
-    ("GHA", "Ghana", 1683, "C", "\U0001F1EC\U0001F1ED"),
+    ("BRA", "Brazil", 1991, "C", "\U0001F1E7\U0001F1F7"),
+    ("MAR", "Morocco", 1880, "C", "\U0001F1F2\U0001F1E6"),
+    ("SCO", "Scotland", 1790, "C",
+     "\U0001F3F4\U000E0067\U000E0062\U000E0073\U000E0063\U000E0074\U000E007F"),
+    ("HAI", "Haiti", 1540, "C", "\U0001F1ED\U0001F1F9"),
     # Group D
-    ("ARG", "Argentina", 2143, "D", "\U0001F1E6\U0001F1F7"),
-    ("IRN", "Iran", 1799, "D", "\U0001F1EE\U0001F1F7"),
-    ("AUS", "Australia", 1752, "D", "\U0001F1E6\U0001F1FA"),
-    ("JAM", "Jamaica", 1601, "D", "\U0001F1EF\U0001F1F2"),
+    ("USA", "United States", 1790, "D", "\U0001F1FA\U0001F1F8"),
+    ("TUR", "Türkiye", 1830, "D", "\U0001F1F9\U0001F1F7"),
+    ("AUS", "Australia", 1730, "D", "\U0001F1E6\U0001F1FA"),
+    ("PAR", "Paraguay", 1730, "D", "\U0001F1F5\U0001F1FE"),
     # Group E
-    ("FRA", "France", 2081, "E", "\U0001F1EB\U0001F1F7"),
-    ("SUI", "Switzerland", 1871, "E", "\U0001F1E8\U0001F1ED"),
-    ("POL", "Poland", 1819, "E", "\U0001F1F5\U0001F1F1"),
-    ("KSA", "Saudi Arabia", 1650, "E", "\U0001F1F8\U0001F1E6"),
+    ("GER", "Germany", 1960, "E", "\U0001F1E9\U0001F1EA"),
+    ("ECU", "Ecuador", 1840, "E", "\U0001F1EA\U0001F1E8"),
+    ("CIV", "Ivory Coast", 1790, "E", "\U0001F1E8\U0001F1EE"),
+    ("CUW", "Curaçao", 1600, "E", "\U0001F1E8\U0001F1FC"),
     # Group F
-    ("ENG", "England", 2012, "F", "\U0001F3F4"),
-    ("SEN", "Senegal", 1841, "F", "\U0001F1F8\U0001F1F3"),
-    ("TUN", "Tunisia", 1703, "F", "\U0001F1F9\U0001F1F3"),
-    ("PAN", "Panama", 1621, "F", "\U0001F1F5\U0001F1E6"),
+    ("NED", "Netherlands", 1960, "F", "\U0001F1F3\U0001F1F1"),
+    ("JPN", "Japan", 1860, "F", "\U0001F1EF\U0001F1F5"),
+    ("SWE", "Sweden", 1770, "F", "\U0001F1F8\U0001F1EA"),
+    ("TUN", "Tunisia", 1720, "F", "\U0001F1F9\U0001F1F3"),
     # Group G
-    ("BRA", "Brazil", 2021, "G", "\U0001F1E7\U0001F1F7"),
-    ("COL", "Colombia", 1911, "G", "\U0001F1E8\U0001F1F4"),
-    ("EGY", "Egypt", 1702, "G", "\U0001F1EA\U0001F1EC"),
-    ("CRC", "Costa Rica", 1654, "G", "\U0001F1E8\U0001F1F7"),
+    ("BEL", "Belgium", 1920, "G", "\U0001F1E7\U0001F1EA"),
+    ("IRN", "Iran", 1800, "G", "\U0001F1EE\U0001F1F7"),
+    ("EGY", "Egypt", 1740, "G", "\U0001F1EA\U0001F1EC"),
+    ("NZL", "New Zealand", 1570, "G", "\U0001F1F3\U0001F1FF"),
     # Group H
-    ("POR", "Portugal", 2003, "H", "\U0001F1F5\U0001F1F9"),
-    ("KOR", "South Korea", 1793, "H", "\U0001F1F0\U0001F1F7"),
-    ("ALG", "Algeria", 1751, "H", "\U0001F1E9\U0001F1FF"),
-    ("UZB", "Uzbekistan", 1622, "H", "\U0001F1FA\U0001F1FF"),
+    ("ESP", "Spain", 2157, "H", "\U0001F1EA\U0001F1F8"),
+    ("URU", "Uruguay", 1930, "H", "\U0001F1FA\U0001F1FE"),
+    ("KSA", "Saudi Arabia", 1660, "H", "\U0001F1F8\U0001F1E6"),
+    ("CPV", "Cape Verde", 1600, "H", "\U0001F1E8\U0001F1FB"),
     # Group I
-    ("NED", "Netherlands", 2031, "I", "\U0001F1F3\U0001F1F1"),
-    ("URU", "Uruguay", 1901, "I", "\U0001F1FA\U0001F1FE"),
-    ("NGA", "Nigeria", 1742, "I", "\U0001F1F3\U0001F1EC"),
-    ("HON", "Honduras", 1582, "I", "\U0001F1ED\U0001F1F3"),
+    ("FRA", "France", 2063, "I", "\U0001F1EB\U0001F1F7"),
+    ("NOR", "Norway", 1880, "I", "\U0001F1F3\U0001F1F4"),
+    ("SEN", "Senegal", 1830, "I", "\U0001F1F8\U0001F1F3"),
+    ("IRQ", "Iraq", 1650, "I", "\U0001F1EE\U0001F1F6"),
     # Group J
-    ("ESP", "Spain", 2051, "J", "\U0001F1EA\U0001F1F8"),
-    ("DEN", "Denmark", 1852, "J", "\U0001F1E9\U0001F1F0"),
-    ("PER", "Peru", 1751, "J", "\U0001F1F5\U0001F1EA"),
-    ("NZL", "New Zealand", 1503, "J", "\U0001F1F3\U0001F1FF"),
+    ("ARG", "Argentina", 2115, "J", "\U0001F1E6\U0001F1F7"),
+    ("AUT", "Austria", 1860, "J", "\U0001F1E6\U0001F1F9"),
+    ("ALG", "Algeria", 1750, "J", "\U0001F1E9\U0001F1FF"),
+    ("JOR", "Jordan", 1590, "J", "\U0001F1EF\U0001F1F4"),
     # Group K
-    ("BEL", "Belgium", 1931, "K", "\U0001F1E7\U0001F1EA"),
-    ("ECU", "Ecuador", 1833, "K", "\U0001F1EA\U0001F1E8"),
-    ("CMR", "Cameroon", 1681, "K", "\U0001F1E8\U0001F1F2"),
-    ("PAR", "Paraguay", 1722, "K", "\U0001F1F5\U0001F1FE"),
+    ("POR", "Portugal", 1989, "K", "\U0001F1F5\U0001F1F9"),
+    ("COL", "Colombia", 1982, "K", "\U0001F1E8\U0001F1F4"),
+    ("UZB", "Uzbekistan", 1700, "K", "\U0001F1FA\U0001F1FF"),
+    ("COD", "DR Congo", 1650, "K", "\U0001F1E8\U0001F1E9"),
     # Group L
-    ("GER", "Germany", 1962, "L", "\U0001F1E9\U0001F1EA"),
-    ("AUT", "Austria", 1831, "L", "\U0001F1E6\U0001F1F9"),
-    ("UKR", "Ukraine", 1801, "L", "\U0001F1FA\U0001F1E6"),
-    ("CIV", "Ivory Coast", 1711, "L", "\U0001F1E8\U0001F1EE"),
+    ("ENG", "England", 2024, "L",
+     "\U0001F3F4\U000E0067\U000E0062\U000E0065\U000E006E\U000E0067\U000E007F"),
+    ("CRO", "Croatia", 1880, "L", "\U0001F1ED\U0001F1F7"),
+    ("GHA", "Ghana", 1690, "L", "\U0001F1EC\U0001F1ED"),
+    ("PAN", "Panama", 1640, "L", "\U0001F1F5\U0001F1E6"),
 ]
 
 GROUPS: list[str] = list("ABCDEFGHIJKL")  # 12 groups
