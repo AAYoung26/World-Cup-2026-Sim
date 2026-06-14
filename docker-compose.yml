@@ -1,0 +1,24 @@
+# Optional containerized local development.
+#   docker compose up --build
+# Then open http://localhost:5173 (frontend, with hot reload). The Vite dev
+# server proxies /api and /ws to the backend service.
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    environment:
+      # Leave blank to use bundled fallback Elo ratings (works offline).
+      - ELO_API_URL=${ELO_API_URL:-}
+      - ELO_API_KEY=${ELO_API_KEY:-}
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "5173:5173"
+    environment:
+      # Vite (running inside this container) proxies to the backend service.
+      - VITE_BACKEND_URL=http://backend:8000
+    depends_on:
+      - backend
